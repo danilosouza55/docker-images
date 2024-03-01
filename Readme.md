@@ -2,6 +2,9 @@ Docker images of some languages and tools.
 
 ## Images
 
+#### Flutter
+- Fluter 3.19.2
+
 #### Postgres
 - Postgres SQL 16.0
 - Postgres SQL 15.4
