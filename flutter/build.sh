@@ -1,8 +1,4 @@
 #/bin/bash
 cd 3.19.2
-docker build -t danilo55555/flutter-sdk:3.19.2 .
-docker build -t danilo55555/flutter-sdk:latest .
-cd ..
-
-docker push danilo55555/flutter-sdk:3.19.2
-docker push danilo55555/flutter-sdk:latest
+docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.19.2 --push .
+docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:latest --push .
