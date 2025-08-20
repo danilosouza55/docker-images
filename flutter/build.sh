@@ -11,4 +11,8 @@ docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter
 cd ..
 cd 3.24.1
 docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.24.1 --push .
+
+cd ..
+cd 3.35.1
+docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.35.1 --push .
 docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:latest --push .
