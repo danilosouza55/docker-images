@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directories:
+      - /flutter/3.19.2
+      - /flutter/3.22.1
+      - /flutter/3.24.1
+      - /flutter/3.35.1
+      - /flutter/3.38.5
+      - /flutter/3.47.9
+      - /postgres/9.6
+      - /postgres/14.2
+      - /postgres/15.4
+      - /postgres/16.0
+    schedule:
+      interval: weekly

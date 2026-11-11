@@ -1,26 +1,30 @@
-#/bin/bash
-docker buildx create --use
+#!/usr/bin/env bash
 
-cd 3.19.2
-docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.19.2 --push .
+set -Eeuo pipefail
 
-cd ..
-cd 3.22.1
-docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.22.1 --push .
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+image="danilo55555/flutter-sdk"
+platforms="linux/amd64,linux/arm64/v8"
+builder="docker-images-multiarch"
 
-cd ..
-cd 3.24.1
-docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.24.1 --push .
+cd "$script_dir"
 
-cd ..
-cd 3.35.1
-docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.35.1 --push .
+if ! docker buildx inspect "$builder" >/dev/null 2>&1; then
+  docker buildx create --name "$builder" --driver docker-container
+fi
 
-cd ..
-cd 3.38.5
-docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.38.5 --push .
+docker buildx use "$builder"
+docker buildx inspect --bootstrap
 
-cd ..
-cd 3.47.9
-docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:3.47.9 --push .
-docker buildx build --platform linux/amd64,linux/arm64/v8 -t danilo55555/flutter-sdk:latest --push .
+for version in 3.19.2 3.22.1 3.24.1 3.35.1 3.38.5 3.47.9; do
+  tags=(--tag "$image:$version")
+  if [[ "$version" == "3.47.9" ]]; then
+    tags+=(--tag "$image:latest")
+  fi
+
+  docker buildx build \
+    --platform "$platforms" \
+    "${tags[@]}" \
+    --push \
+    "$version"
+done

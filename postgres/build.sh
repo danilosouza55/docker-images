@@ -1,23 +1,18 @@
-#/bin/bash
-cd 9.6
-docker build -t danilo55555/postgres:9.6 .
-cd ..
+#!/usr/bin/env bash
 
-cd 14.2
-docker build -t danilo55555/postgres:14.2 .
-cd ..
+set -Eeuo pipefail
 
-cd 15.4
-docker build -t danilo55555/postgres:15.4 .
-cd ..
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+image="danilo55555/postgres"
 
-cd 16.0
-docker build -t danilo55555/postgres:16.0 .
-docker build -t danilo55555/postgres:latest .
-cd ..
+cd "$script_dir"
 
-docker push danilo55555/postgres:9.6
-docker push danilo55555/postgres:14.2
-docker push danilo55555/postgres:15.4
-docker push danilo55555/postgres:16.0
-docker push danilo55555/postgres:latest
+for version in 9.6 14.2 15.4 16.0; do
+  docker build --tag "$image:$version" "$version"
+done
+
+docker tag "$image:16.0" "$image:latest"
+
+for version in 9.6 14.2 15.4 16.0 latest; do
+  docker push "$image:$version"
+done
