@@ -6,75 +6,62 @@ on:
     paths:
       - "flutter/**"
       - "postgres/**"
+      - "scripts/**"
       - ".github/workflows/docker-images.yml"
   pull_request:
     paths:
       - "flutter/**"
       - "postgres/**"
+      - "scripts/**"
       - ".github/workflows/docker-images.yml"
 
 permissions:
   contents: read
 
 jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.versions.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Discover image versions
+        id: versions
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          matrix="$(
+            for kind in flutter postgres; do
+              version_list="$(bash scripts/image-versions.sh "$kind")"
+              mapfile -t versions <<< "$version_list"
+              latest="${versions[${#versions[@]}-1]}"
+              if [[ "$kind" == flutter ]]; then
+                image=danilo55555/flutter-sdk
+                platforms=linux/amd64,linux/arm64/v8
+              else
+                image=danilo55555/postgres
+                platforms=linux/amd64
+              fi
+              for version in "${versions[@]}"; do
+                is_latest=false
+                [[ "$version" != "$latest" ]] || is_latest=true
+                jq -cn --arg path "$kind/$version" --arg image "$image" \
+                  --arg version "$version" --arg platforms "$platforms" \
+                  --argjson latest "$is_latest" \
+                  '{path: $path, image: $image, version: $version, platforms: $platforms, latest: $latest}'
+              done
+            done | jq -sc '{include: .}'
+          )"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: discover
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false
       max-parallel: 2
-      matrix:
-        include:
-          - path: flutter/3.19.2
-            image: danilo55555/flutter-sdk
-            version: "3.19.2"
-            platforms: linux/amd64,linux/arm64/v8
-            latest: false
-          - path: flutter/3.22.1
-            image: danilo55555/flutter-sdk
-            version: "3.22.1"
-            platforms: linux/amd64,linux/arm64/v8
-            latest: false
-          - path: flutter/3.24.1
-            image: danilo55555/flutter-sdk
-            version: "3.24.1"
-            platforms: linux/amd64,linux/arm64/v8
-            latest: false
-          - path: flutter/3.35.1
-            image: danilo55555/flutter-sdk
-            version: "3.35.1"
-            platforms: linux/amd64,linux/arm64/v8
-            latest: false
-          - path: flutter/3.38.5
-            image: danilo55555/flutter-sdk
-            version: "3.38.5"
-            platforms: linux/amd64,linux/arm64/v8
-            latest: false
-          - path: flutter/3.47.9
-            image: danilo55555/flutter-sdk
-            version: "3.47.9"
-            platforms: linux/amd64,linux/arm64/v8
-            latest: true
-          - path: postgres/9.6
-            image: danilo55555/postgres
-            version: "9.6"
-            platforms: linux/amd64
-            latest: false
-          - path: postgres/14.2
-            image: danilo55555/postgres
-            version: "14.2"
-            platforms: linux/amd64
-            latest: false
-          - path: postgres/15.4
-            image: danilo55555/postgres
-            version: "15.4"
-            platforms: linux/amd64
-            latest: false
-          - path: postgres/16.0
-            image: danilo55555/postgres
-            version: "16.0"
-            platforms: linux/amd64
-            latest: true
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3

@@ -3,6 +3,9 @@
 set -Eeuo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+version_list="$(bash "$script_dir/../scripts/image-versions.sh" "$script_dir")"
+mapfile -t versions <<< "$version_list"
+latest="${versions[${#versions[@]}-1]}"
 image="danilo55555/flutter-sdk"
 platforms="linux/amd64,linux/arm64/v8"
 builder="docker-images-multiarch"
@@ -16,9 +19,9 @@ fi
 docker buildx use "$builder"
 docker buildx inspect --bootstrap
 
-for version in 3.19.2 3.22.1 3.24.1 3.35.1 3.38.5 3.47.9; do
+for version in "${versions[@]}"; do
   tags=(--tag "$image:$version")
-  if [[ "$version" == "3.47.9" ]]; then
+  if [[ "$version" == "$latest" ]]; then
     tags+=(--tag "$image:latest")
   fi
 
